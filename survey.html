@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Experience Survey</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0d7a7a;
+    --teal-light: #e6f4f4;
+    --teal-mid: #1a9e9e;
+    --navy: #0f2d40;
+    --cream: #faf8f4;
+    --sand: #f0ebe0;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #d4cfc4;
+    --white: #ffffff;
+    --accent: #c8873a;
+    --error: #c0392b;
+    --success: #1a7a4a;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--navy);
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 20px rgba(15,45,64,0.3);
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: var(--teal-mid);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    color: var(--white);
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  header p {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.78rem;
+    margin-top: 2px;
+    font-weight: 300;
+  }
+  .progress-bar-wrap {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .progress-label { color: rgba(255,255,255,0.7); font-size: 0.78rem; }
+  .progress-bar {
+    width: 140px; height: 6px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--teal-mid);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* LAYOUT */
+  .container { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* INTRO CARD */
+  .intro-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 32px;
+    border-left: 4px solid var(--teal);
+  }
+  .intro-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; color: var(--navy);
+    margin-bottom: 10px;
+  }
+  .intro-card p { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
+
+  /* SECTIONS */
+  .section {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .section:hover { box-shadow: 0 4px 24px rgba(13,122,122,0.08); }
+  .section-header {
+    background: var(--navy);
+    padding: 18px 28px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-header span {
+    font-family: 'Playfair Display', serif;
+    color: var(--white); font-size: 1rem; font-weight: 600;
+    letter-spacing: 0.02em; text-transform: uppercase;
+  }
+  .section-icon { font-size: 18px; }
+  .section-body { padding: 8px 0; }
+
+  /* QUESTIONS */
+  .question-block {
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--sand);
+    transition: background 0.15s;
+  }
+  .question-block:last-child { border-bottom: none; }
+  .question-block.hidden { display: none; }
+  .question-block:hover { background: rgba(13,122,122,0.02); }
+  .question-num {
+    font-size: 0.7rem; font-weight: 600; color: var(--teal);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .question-text {
+    font-size: 0.95rem; color: var(--text);
+    line-height: 1.6; margin-bottom: 16px; font-weight: 400;
+  }
+  .options {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .options.stacked { flex-direction: column; gap: 6px; }
+
+  /* RADIO CHIPS */
+  .chip-label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 99px;
+    cursor: pointer;
+    font-size: 0.85rem; color: var(--text);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .chip-label:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-light); }
+  .chip-label input { display: none; }
+  .chip-label.checked {
+    border-color: var(--teal); background: var(--teal);
+    color: var(--white); font-weight: 500;
+  }
+
+  /* STACKED RADIO */
+  .radio-label {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem; color: var(--text);
+    transition: all 0.15s;
+  }
+  .radio-label:hover { border-color: var(--teal); background: var(--teal-light); }
+  .radio-label input { display: none; }
+  .radio-custom {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .radio-custom::after {
+    content: ''; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--white);
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .radio-label.checked { border-color: var(--teal); background: var(--teal-light); }
+  .radio-label.checked .radio-custom {
+    background: var(--teal); border-color: var(--teal);
+  }
+  .radio-label.checked .radio-custom::after { opacity: 1; }
+
+  /* RATING SCALE */
+  .rating-scale {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .rating-btn {
+    width: 48px; height: 48px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--white);
+    cursor: pointer;
+    font-size: 0.9rem; font-weight: 500;
+    color: var(--text);
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+  }
+  .rating-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-light); }
+  .rating-btn.selected { background: var(--teal); border-color: var(--teal); color: var(--white); }
+  .rating-labels {
+    display: flex; justify-content: space-between;
+    margin-top: 8px;
+    font-size: 0.72rem; color: var(--muted);
+  }
+
+  /* SUBMIT */
+  .submit-section { text-align: center; margin-top: 40px; }
+  .submit-btn {
+    background: var(--teal);
+    color: var(--white);
+    border: none;
+    padding: 16px 52px;
+    border-radius: 99px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 20px rgba(13,122,122,0.3);
+  }
+  .submit-btn:hover { background: var(--navy); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(13,122,122,0.35); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .submit-note { color: var(--muted); font-size: 0.8rem; margin-top: 12px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--navy); color: var(--white);
+    padding: 14px 28px; border-radius: 99px;
+    font-size: 0.88rem; font-weight: 500;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 999;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--error); }
+
+  /* SUCCESS SCREEN */
+  .success-screen {
+    display: none; text-align: center;
+    padding: 80px 40px;
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .success-screen.visible { display: block; }
+  .success-icon { font-size: 64px; margin-bottom: 20px; }
+  .success-screen h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem; color: var(--navy); margin-bottom: 12px;
+  }
+  .success-screen p { color: var(--muted); font-size: 0.95rem; line-height: 1.7; }
+
+  /* CONFIG NOTICE */
+  .config-notice {
+    background: #fff3cd; border: 1px solid #ffc107;
+    border-radius: 8px; padding: 14px 20px;
+    font-size: 0.82rem; color: #856404;
+    margin-bottom: 24px;
+    display: none;
+  }
+  .config-notice.show { display: block; }
+
+  @media (max-width: 600px) {
+    header { padding: 20px; flex-direction: column; gap: 14px; align-items: flex-start; }
+    .container { padding: 24px 16px 60px; }
+    .section-header { padding: 14px 20px; }
+    .question-block { padding: 18px 20px; }
+    .rating-btn { width: 40px; height: 40px; font-size: 0.82rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-icon">🏥</div>
+    <div>
+      <h1>Hospital Experience Survey</h1>
+      <p>Your feedback helps us improve patient care</p>
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <span class="progress-label" id="progressLabel">0% complete</span>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="config-notice" id="configNotice">
+    ⚠️ <strong>Setup required:</strong> Replace <code>https://dflubqcfkbnpyjkjioap.supabase.co</code> and <code>sb_publishable_33OIm4PtwED_dLSBoQzK2g_YPXeuX2M</code> in the &lt;script&gt; block at the bottom of this file with your actual Supabase credentials.
+  </div>
+
+  <div class="intro-card">
+    <h2>Instructions</h2>
+    <p>This survey asks about the care you received during your hospital stay. Answer all questions by selecting the option that best reflects your experience. Some questions may ask you to skip ahead — follow the on-screen instructions. Your responses are confidential and will be used to improve care quality.</p>
+  </div>
+
+  <form id="surveyForm">
+
+    <!-- NURSES -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">👩‍⚕️</span>
+        <span>Your Care from Nurses</span>
+      </div>
+      <div class="section-body">
+        <div class="question-block" data-q="1">
+          <div class="question-num">Question 1</div>
+          <div class="question-text">During this hospital stay, how often did nurses treat you with courtesy and respect?</div>
+          <div class="options" data-name="q1" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="2">
+          <div class="question-num">Question 2</div>
+          <div class="question-text">During this hospital stay, how often did nurses listen carefully to you?</div>
+          <div class="options" data-name="q2" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="3">
+          <div class="question-num">Question 3</div>
+          <div class="question-text">During this hospital stay, how often did nurses explain things in a way you could understand?</div>
+          <div class="options" data-name="q3" data-type="frequency"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCTORS -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">👨‍⚕️</span>
+        <span>Your Care from Doctors</span>
+      </div>
+      <div class="section-body">
+        <div class="question-block" data-q="4">
+          <div class="question-num">Question 4</div>
+          <div class="question-text">During this hospital stay, how often did doctors treat you with courtesy and respect?</div>
+          <div class="options" data-name="q4" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="5">
+          <div class="question-num">Question 5</div>
+          <div class="question-text">During this hospital stay, how often did doctors listen carefully to you?</div>
+          <div class="options" data-name="q5" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="6">
+          <div class="question-num">Question 6</div>
+          <div class="question-text">During this hospital stay, how often did doctors explain things in a way you could understand?</div>
+          <div class="options" data-name="q6" data-type="frequency"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENVIRONMENT -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">🏨</span>
+        <span>The Hospital Environment</span>
+      </div>
+      <div class="section-body">
+        <div class="question-block" data-q="7">
+          <div class="question-num">Question 7</div>
+          <div class="question-text">During this hospital stay, how often were your room and bathroom kept clean?</div>
+          <div class="options" data-name="q7" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="8">
+          <div class="question-num">Question 8</div>
+          <div class="question-text">During this hospital stay, how often were you able to get the rest you needed?</div>
+          <div class="options" data-name="q8" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="9">
+          <div class="question-num">Question 9</div>
+          <div class="question-text">During this hospital stay, how often was the area around your room quiet at night?</div>
+          <div class="options" data-name="q9" data-type="frequency"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARE IN HOSPITAL -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">🩺</span>
+        <span>Your Care in This Hospital</span>
+      </div>
+      <div class="section-body">
+        <div class="question-block" data-q="10">
+          <div class="question-num">Question 10</div>
+          <div class="question-text">During this hospital stay, how often were doctors, nurses and other hospital staff informed and up-to-date about your care?</div>
+          <div class="options" data-name="q10" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="11">
+          <div class="question-num">Question 11</div>
+          <div class="question-text">During this hospital stay, how often did doctors, nurses and other hospital staff work well together to care for you?</div>
+          <div class="options" data-name="q11" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="12">
+          <div class="question-num">Question 12</div>
+          <div class="question-text">During this hospital stay, did you need help from nurses or other hospital staff in getting to the bathroom or in using a bedpan?</div>
+          <div class="options" data-name="q12" data-type="yesno" data-skip-no="14"></div>
+        </div>
+        <div class="question-block" data-q="13">
+          <div class="question-num">Question 13</div>
+          <div class="question-text">How often did you get help in getting to the bathroom or in using a bedpan as soon as you wanted?</div>
+          <div class="options" data-name="q13" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="14">
+          <div class="question-num">Question 14</div>
+          <div class="question-text">During this hospital stay, when you asked for help right away, how often did you get help as soon as you needed?</div>
+          <div class="options stacked" data-name="q14" data-type="frequency_plus">
+          </div>
+        </div>
+        <div class="question-block" data-q="15">
+          <div class="question-num">Question 15</div>
+          <div class="question-text">During this hospital stay, were you given any medicine that you had not taken before?</div>
+          <div class="options" data-name="q15" data-type="yesno" data-skip-no="18"></div>
+        </div>
+        <div class="question-block" data-q="16">
+          <div class="question-num">Question 16</div>
+          <div class="question-text">Before giving you any new medicine, how often did hospital staff tell you what the medicine was for?</div>
+          <div class="options" data-name="q16" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="17">
+          <div class="question-num">Question 17</div>
+          <div class="question-text">Before giving you any new medicine, how often did hospital staff describe possible side effects in a way you could understand?</div>
+          <div class="options" data-name="q17" data-type="frequency"></div>
+        </div>
+        <div class="question-block" data-q="18">
+          <div class="question-num">Question 18</div>
+          <div class="question-text">During this hospital stay, did doctors, nurses and other hospital staff help you to rest and recover?</div>
+          <div class="options stacked" data-name="q18" data-type="yes_definitely"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEAVING -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">🚪</span>
+        <span>Leaving the Hospital</span>
+      </div>
+      <div class="section-body">
+        <div class="question-block" data-q="19">
+          <div class="question-num">Question 19</div>
+          <div class="question-text">Did doctors, nurses or other hospital staff work with you and your family or caregiver in making plans for your care after you left the hospital?</div>
+          <div class="options stacked" data-name="q19" data-type="yes_definitely"></div>
+        </div>
+        <div class="question-block" data-q="20">
+          <div class="question-num">Question 20</div>
+          <div class="question-text">Did doctors, nurses or other hospital staff give your family or caregiver enough information about what symptoms or health problems to watch for after you left the hospital?</div>
+          <div class="options stacked" data-name="q20" data-type="yes_def_na"></div>
+        </div>
+        <div class="question-block" data-q="21">
+          <div class="question-num">Question 21</div>
+          <div class="question-text">When you left the hospital, did you go directly to your own home, to someone else's home, or to another health facility?</div>
+          <div class="options stacked" data-name="q21" data-type="discharge" data-skip-facility="24"></div>
+        </div>
+        <div class="question-block" data-q="22">
+          <div class="question-num">Question 22</div>
+          <div class="question-text">During this hospital stay, did doctors, nurses or other hospital staff talk with you about whether you would have the help you needed after you left the hospital?</div>
+          <div class="options" data-name="q22" data-type="yesno"></div>
+        </div>
+        <div class="question-block" data-q="23">
+          <div class="question-num">Question 23</div>
+          <div class="question-text">During this hospital stay, did you get information in writing about what symptoms or health problems to look out for after you left the hospital?</div>
+          <div class="options" data-name="q23" data-type="yesno"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERALL RATING -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">⭐</span>
+        <span>Overall Rating of Hospital</span>
+      </div>
+      <div class="section-body">
+        <div class="question-block" data-q="24">
+          <div class="question-num">Question 24</div>
+          <div class="question-text">Using any number from 0 to 10, where 0 is the worst hospital possible and 10 is the best hospital possible, what number would you use to rate this hospital during your stay?</div>
+          <div class="rating-scale" id="ratingScale"></div>
+          <div class="rating-labels"><span>0 — Worst</span><span>10 — Best</span></div>
+          <input type="hidden" name="q24" id="q24hidden">
+        </div>
+        <div class="question-block" data-q="25">
+          <div class="question-num">Question 25</div>
+          <div class="question-text">Would you recommend this hospital to your friends and family?</div>
+          <div class="options stacked" data-name="q25" data-type="recommend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABOUT YOU -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-icon">👤</span>
+        <span>About You</span>
+      </div>
+      <div class="section-body">
+        <div class="question-block" data-q="26">
+          <div class="question-num">Question 26</div>
+          <div class="question-text">Was this hospital stay planned in advance?</div>
+          <div class="options stacked" data-name="q26" data-type="yes_definitely"></div>
+        </div>
+        <div class="question-block" data-q="27">
+          <div class="question-num">Question 27</div>
+          <div class="question-text">In general, how would you rate your overall health?</div>
+          <div class="options stacked" data-name="q27" data-type="health"></div>
+        </div>
+        <div class="question-block" data-q="28">
+          <div class="question-num">Question 28</div>
+          <div class="question-text">In general, how would you rate your overall mental or emotional health?</div>
+          <div class="options stacked" data-name="q28" data-type="health"></div>
+        </div>
+        <div class="question-block" data-q="29">
+          <div class="question-num">Question 29</div>
+          <div class="question-text">What language do you mainly speak at home?</div>
+          <div class="options stacked" data-name="q29" data-type="language"></div>
+        </div>
+        <div class="question-block" data-q="30">
+          <div class="question-num">Question 30</div>
+          <div class="question-text">What is the highest grade or level of school that you have completed?</div>
+          <div class="options stacked" data-name="q30" data-type="education"></div>
+        </div>
+        <div class="question-block" data-q="31">
+          <div class="question-num">Question 31</div>
+          <div class="question-text">Are you of Spanish, Hispanic or Latino origin?</div>
+          <div class="options stacked" data-name="q31" data-type="hispanic"></div>
+        </div>
+        <div class="question-block" data-q="32">
+          <div class="question-num">Question 32</div>
+          <div class="question-text">What is your race? Please choose one or more.</div>
+          <div class="options stacked" data-name="q32" data-type="race"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-section">
+      <button type="submit" class="submit-btn" id="submitBtn">Submit Survey</button>
+      <p class="submit-note">Your response is anonymous and will be used to improve care quality.</p>
+    </div>
+
+  </form>
+
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <h2>Thank You for Your Feedback</h2>
+    <p>Your response has been recorded. Your experience helps us continuously improve the quality of care we provide to all patients.</p>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://dflubqcfkbnpyjkjioap.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_33OIm4PtwED_dLSBoQzK2g_YPXeuX2M';
+const TABLE_NAME = 'survey_responses';
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Show config notice if not set
+// credentials configured
+
+// Using fetch API directly
+
+// Option sets
+const OPTS = {
+  frequency: ['Never','Sometimes','Usually','Always'],
+  yesno: ['Yes','No'],
+  frequency_plus: ['Never','Sometimes','Usually','Always','I never asked for help right away'],
+  yes_definitely: ['Yes, definitely','Yes, somewhat','No'],
+  yes_def_na: ['Yes, definitely','Yes, somewhat','No','I did not have family or a caregiver watch for symptoms or health problems'],
+  discharge: ['Own home','Someone else\'s home','Another health facility'],
+  recommend: ['Definitely no','Probably no','Probably yes','Definitely yes'],
+  health: ['Excellent','Very good','Good','Fair','Poor'],
+  language: ['English','Spanish','Chinese','Another language'],
+  education: ['8th grade or less','Some high school, but did not graduate','High school graduate or GED','Some college or 2-year degree','4-year college graduate','More than 4-year college degree'],
+  hispanic: ['No, not Spanish/Hispanic/Latino','Yes, Cuban','Yes, Mexican, Mexican American, Chicano','Yes, Puerto Rican','Yes, other Spanish/Hispanic/Latino'],
+  race: ['American Indian or Alaska Native','Asian','Black or African American','Native Hawaiian or other Pacific Islander','White']
+};
+
+// Build all option groups
+document.querySelectorAll('.options[data-type]').forEach(container => {
+  const type = container.dataset.type;
+  const name = container.dataset.name;
+  const stacked = container.classList.contains('stacked');
+  const isMulti = type === 'race';
+  const opts = OPTS[type] || [];
+
+  opts.forEach(opt => {
+    const lbl = document.createElement('label');
+    lbl.className = stacked ? 'radio-label' : 'chip-label';
+    const inp = document.createElement('input');
+    inp.type = isMulti ? 'checkbox' : 'radio';
+    inp.name = name;
+    inp.value = opt;
+    if (stacked) {
+      const rc = document.createElement('span');
+      rc.className = 'radio-custom';
+      lbl.appendChild(inp);
+      lbl.appendChild(rc);
+    } else {
+      lbl.appendChild(inp);
+    }
+    lbl.appendChild(document.createTextNode(opt));
+    container.appendChild(lbl);
+
+    inp.addEventListener('change', () => {
+      // Update checked state visually
+      if (!isMulti) {
+        container.querySelectorAll('label').forEach(l => l.classList.remove('checked'));
+      }
+      lbl.classList.toggle('checked', inp.checked);
+      // Skip logic
+      handleSkip(name, opt, inp.checked);
+      updateProgress();
+    });
+  });
+});
+
+// Rating scale Q24
+const ratingScale = document.getElementById('ratingScale');
+for (let i = 0; i <= 10; i++) {
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'rating-btn'; btn.textContent = i;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('q24hidden').value = i;
+    updateProgress();
+  });
+  ratingScale.appendChild(btn);
+}
+
+// Skip logic
+function handleSkip(name, value, checked) {
+  if (!checked) return;
+  const container = document.querySelector(`.options[data-name="${name}"]`);
+  if (!container) return;
+
+  if (name === 'q12') {
+    const q13 = document.querySelector('[data-q="13"]');
+    q13.classList.toggle('hidden', value === 'No');
+  }
+  if (name === 'q15') {
+    const q16 = document.querySelector('[data-q="16"]');
+    const q17 = document.querySelector('[data-q="17"]');
+    const hide = value === 'No';
+    q16.classList.toggle('hidden', hide);
+    q17.classList.toggle('hidden', hide);
+  }
+  if (name === 'q21' && value === 'Another health facility') {
+    document.querySelector('[data-q="22"]').classList.add('hidden');
+    document.querySelector('[data-q="23"]').classList.add('hidden');
+  } else if (name === 'q21') {
+    document.querySelector('[data-q="22"]').classList.remove('hidden');
+    document.querySelector('[data-q="23"]').classList.remove('hidden');
+  }
+}
+
+// Progress
+function updateProgress() {
+  const total = 32;
+  let answered = 0;
+  for (let i = 1; i <= 32; i++) {
+    const qBlock = document.querySelector(`[data-q="${i}"]`);
+    if (qBlock && qBlock.classList.contains('hidden')) { answered++; continue; }
+    if (i === 24) { if (document.getElementById('q24hidden').value !== '') answered++; continue; }
+    const name = `q${i}`;
+    const checked = document.querySelector(`[name="${name}"]:checked`);
+    if (checked) answered++;
+  }
+  const pct = Math.round((answered / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = pct + '% complete';
+}
+
+// Toast
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Collect form data
+function collectData() {
+  const data = { submitted_at: new Date().toISOString() };
+  for (let i = 1; i <= 32; i++) {
+    if (i === 24) {
+      data[`q${i}`] = document.getElementById('q24hidden').value || null;
+      continue;
+    }
+    if (i === 32) {
+      const vals = [...document.querySelectorAll(`[name="q32"]:checked`)].map(c => c.value);
+      data['q32'] = vals.length ? vals.join(', ') : null;
+      continue;
+    }
+    const el = document.querySelector(`[name="q${i}"]:checked`);
+    data[`q${i}`] = el ? el.value : null;
+  }
+  return data;
+}
+
+// Submit
+document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'Submitting…';
+
+  const data = collectData();
+
+
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(data)
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || resp.statusText);
+    }
+    document.getElementById('surveyForm').style.display = 'none';
+    document.getElementById('successScreen').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    showToast('❌ Submission failed. Please try again.', 'error');
+    console.error(err);
+    btn.disabled = false; btn.textContent = 'Submit Survey';
+  }
+});
+</script>
+</body>
+</html>

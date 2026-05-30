@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Survey Dashboard — Hospital Experience</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --teal: #0d7a7a;
+    --teal-light: #e6f4f4;
+    --teal-mid: #1a9e9e;
+    --navy: #0f2d40;
+    --cream: #faf8f4;
+    --sand: #f0ebe0;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #d4cfc4;
+    --white: #ffffff;
+    --accent: #c8873a;
+    --good: #1a7a4a;
+    --warn: #c8873a;
+    --bad: #c0392b;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    background: var(--navy); padding: 24px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 20px rgba(15,45,64,0.35);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-icon { width: 44px; height: 44px; background: var(--teal-mid); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  header h1 { font-family: 'Playfair Display', serif; color: var(--white); font-size: 1.4rem; font-weight: 600; }
+  header p { color: rgba(255,255,255,0.5); font-size: 0.78rem; margin-top: 2px; }
+  .header-actions { display: flex; gap: 12px; align-items: center; }
+  .refresh-btn, .export-btn {
+    padding: 8px 20px; border-radius: 99px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .refresh-btn { background: rgba(255,255,255,0.1); color: var(--white); border: 1px solid rgba(255,255,255,0.2); }
+  .refresh-btn:hover { background: rgba(255,255,255,0.2); }
+  .export-btn { background: var(--teal-mid); color: var(--white); border: none; }
+  .export-btn:hover { background: var(--teal); }
+  .last-updated { color: rgba(255,255,255,0.45); font-size: 0.74rem; }
+
+  /* LAYOUT */
+  .container { max-width: 1200px; margin: 0 auto; padding: 36px 24px 80px; }
+
+  /* CONFIG NOTICE */
+  .config-notice {
+    background: #fff3cd; border: 1px solid #ffc107;
+    border-radius: 8px; padding: 14px 20px;
+    font-size: 0.82rem; color: #856404;
+    margin-bottom: 24px; display: none;
+  }
+  .config-notice.show { display: block; }
+
+  /* STAT CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px 20px;
+    transition: box-shadow 0.2s;
+  }
+  .stat-card:hover { box-shadow: 0 4px 20px rgba(13,122,122,0.1); }
+  .stat-label { font-size: 0.72rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--navy); font-weight: 700; line-height: 1; }
+  .stat-sub { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
+  .stat-card.highlight { border-left: 4px solid var(--teal); }
+  .trend { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 500; margin-top: 6px; }
+  .trend.up { color: var(--good); }
+  .trend.down { color: var(--bad); }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; color: var(--navy);
+    margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--sand);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  /* CHART CARDS */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+  .chart-grid.single { grid-template-columns: 1fr; }
+  .chart-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    transition: box-shadow 0.2s;
+  }
+  .chart-card:hover { box-shadow: 0 4px 20px rgba(13,122,122,0.08); }
+  .chart-card h3 { font-size: 0.88rem; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+  .chart-card p { font-size: 0.75rem; color: var(--muted); margin-bottom: 18px; }
+  .chart-wrap { position: relative; }
+
+  /* SCORE TABLE */
+  .score-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .score-table th {
+    text-align: left; padding: 10px 14px;
+    background: var(--sand); color: var(--navy);
+    font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .score-table th:first-child { border-radius: 8px 0 0 8px; }
+  .score-table th:last-child { border-radius: 0 8px 8px 0; }
+  .score-table td { padding: 12px 14px; border-bottom: 1px solid var(--sand); color: var(--text); }
+  .score-table tr:last-child td { border-bottom: none; }
+  .score-table tr:hover td { background: rgba(13,122,122,0.03); }
+  .score-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .score-bar { height: 8px; border-radius: 99px; background: var(--teal); min-width: 4px; transition: width 0.4s; }
+  .score-num { font-weight: 600; color: var(--navy); min-width: 36px; font-size: 0.88rem; }
+  .badge {
+    padding: 3px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 600;
+  }
+  .badge.good { background: #d4f1e3; color: var(--good); }
+  .badge.warn { background: #fef3cd; color: var(--warn); }
+  .badge.bad { background: #fde8e8; color: var(--bad); }
+
+  /* RECOMMEND DONUT */
+  .donut-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 32px; }
+  .donut-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    text-align: center;
+  }
+  .donut-card h3 { font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+  .donut-card p { font-size: 0.72rem; color: var(--muted); margin-bottom: 16px; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .filter-bar label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+  .filter-select {
+    padding: 7px 14px; border: 1.5px solid var(--border);
+    border-radius: 99px; background: var(--white);
+    font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+    color: var(--text); cursor: pointer; outline: none;
+    transition: border-color 0.15s;
+  }
+  .filter-select:focus { border-color: var(--teal); }
+
+  /* LOADING */
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 200px; color: var(--muted); font-size: 0.9rem; gap: 12px;
+  }
+  .spinner {
+    width: 24px; height: 24px; border: 2.5px solid var(--border);
+    border-top-color: var(--teal); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RESPONSES TABLE */
+  .responses-section { margin-top: 32px; }
+  .responses-table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  .responses-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 700px; }
+  .responses-table th {
+    background: var(--navy); color: var(--white); padding: 10px 14px;
+    text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500;
+  }
+  .responses-table td { padding: 10px 14px; border-bottom: 1px solid var(--sand); }
+  .responses-table tr:last-child td { border-bottom: none; }
+  .responses-table tr:hover td { background: rgba(13,122,122,0.03); }
+  .pagination { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 14px; }
+  .page-btn {
+    padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 99px;
+    background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 0.8rem;
+    cursor: pointer; transition: all 0.15s; color: var(--text);
+  }
+  .page-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .page-btn.active { background: var(--teal); color: var(--white); border-color: var(--teal); }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  @media (max-width: 700px) {
+    header { padding: 18px; flex-direction: column; gap: 14px; align-items: flex-start; }
+    .chart-grid { grid-template-columns: 1fr; }
+    .container { padding: 20px 14px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-icon">📊</div>
+    <div>
+      <h1>Survey Dashboard</h1>
+      <p>Hospital Experience — HCAHPS Analytics</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span class="last-updated" id="lastUpdated"></span>
+    <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+    <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="config-notice" id="configNotice">
+    ⚠️ <strong>Setup required:</strong> Replace <code>https://dflubqcfkbnpyjkjioap.supabase.co</code> and <code>sb_publishable_33OIm4PtwED_dLSBoQzK2g_YPXeuX2M</code> with your credentials.
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <label>Date range:</label>
+    <select class="filter-select" id="dateFilter" onchange="loadAll()">
+      <option value="all">All time</option>
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+    </select>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stat-grid" id="statGrid">
+    <div class="loading"><div class="spinner"></div> Loading…</div>
+  </div>
+
+  <!-- SECTION SCORES TABLE -->
+  <div class="section-title">📋 HCAHPS Domain Scores</div>
+  <div class="chart-card" style="margin-bottom:32px">
+    <div id="domainTableWrap"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="section-title">📈 Key Metrics</div>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Overall Hospital Rating Distribution</h3>
+      <p>How patients rated the hospital (0–10)</p>
+      <div class="chart-wrap"><canvas id="ratingChart" height="200"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Recommend to Friends &amp; Family</h3>
+      <p>Q25 responses breakdown</p>
+      <div class="chart-wrap"><canvas id="recommendChart" height="200"></canvas></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Nurse &amp; Doctor Communication</h3>
+      <p>Average scores for Q1–Q6 (1=Never, 4=Always)</p>
+      <div class="chart-wrap"><canvas id="commChart" height="220"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Hospital Environment Scores</h3>
+      <p>Q7–Q9 cleanliness, rest, quiet (avg)</p>
+      <div class="chart-wrap"><canvas id="envChart" height="220"></canvas></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 3 -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Responses Over Time</h3>
+      <p>Daily submission count</p>
+      <div class="chart-wrap"><canvas id="timeChart" height="180"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Overall Health Rating of Respondents</h3>
+      <p>Q27 self-reported health breakdown</p>
+      <div class="chart-wrap"><canvas id="healthChart" height="180"></canvas></div>
+    </div>
+  </div>
+
+  <!-- RECENT RESPONSES TABLE -->
+  <div class="responses-section">
+    <div class="section-title">🗂 Recent Responses</div>
+    <div class="responses-table-wrap" id="responsesTableWrap">
+      <div class="loading"><div class="spinner"></div> Loading…</div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://dflubqcfkbnpyjkjioap.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_33OIm4PtwED_dLSBoQzK2g_YPXeuX2M';
+const TABLE_NAME = 'survey_responses';
+// ─────────────────────────────────────────────────────────────────────────────
+
+// credentials configured
+
+// Using fetch API directly (avoids postMessage sandbox issues)
+
+let allData = [];
+let charts = {};
+let currentPage = 1;
+const PAGE_SIZE = 15;
+
+const FREQ_MAP = { 'Never': 1, 'Sometimes': 2, 'Usually': 3, 'Always': 4 };
+const COLORS = {
+  teal: '#0d7a7a', tealMid: '#1a9e9e', navy: '#0f2d40',
+  accent: '#c8873a', good: '#1a7a4a', warn: '#c8873a', bad: '#c0392b',
+  palette: ['#0d7a7a','#1a9e9e','#c8873a','#3a6bc8','#7a3ac8','#c83a6b']
+};
+
+function getDateFilter() {
+  const v = document.getElementById('dateFilter').value;
+  if (v === 'all') return null;
+  const d = new Date();
+  d.setDate(d.getDate() - parseInt(v));
+  return d.toISOString();
+}
+
+async function loadAll() {
+  document.getElementById('lastUpdated').textContent = 'Loading…';
+  const since = getDateFilter();
+  let url = `${SUPABASE_URL}/rest/v1/${TABLE_NAME}?select=*&order=submitted_at.desc`;
+  if (since) url += `&submitted_at=gte.${encodeURIComponent(since)}`;
+
+  let resp, data;
+  try {
+    resp = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    data = await resp.json();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('statGrid').innerHTML = `<div style="grid-column:1/-1;background:#fde8e8;border:1px solid #c0392b;border-radius:10px;padding:20px 24px;color:#c0392b;font-size:0.88rem;"><strong>⚠️ Network error loading data.</strong> Check your Supabase URL and anon key.</div>`;
+    document.getElementById('lastUpdated').textContent = 'Error loading data';
+    return;
+  }
+  if (!resp.ok || data.error || data.code) {
+    const msg = data.message || data.error || JSON.stringify(data);
+    document.getElementById('statGrid').innerHTML = `<div style="grid-column:1/-1;background:#fde8e8;border:1px solid #c0392b;border-radius:10px;padding:20px 24px;color:#c0392b;font-size:0.88rem;"><strong>⚠️ Could not load data.</strong> ${msg}</div>`;
+    document.getElementById('lastUpdated').textContent = 'Error loading data';
+    return;
+  }
+  allData = Array.isArray(data) ? data : [];
+  document.getElementById('lastUpdated').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+
+  renderStats();
+  renderDomainTable();
+  renderRatingChart();
+  renderRecommendChart();
+  renderCommChart();
+  renderEnvChart();
+  renderTimeChart();
+  renderHealthChart();
+  renderResponsesTable();
+}
+
+function avg(arr, key, map) {
+  const vals = arr.map(r => map ? map[r[key]] : parseFloat(r[key])).filter(v => v != null && !isNaN(v));
+  if (!vals.length) return null;
+  return (vals.reduce((a, b) => a + b, 0) / vals.length);
+}
+
+function pct(arr, key, val) {
+  const total = arr.filter(r => r[key] != null).length;
+  if (!total) return 0;
+  return Math.round(arr.filter(r => r[key] === val).length / total * 100);
+}
+
+function scoreColor(v, max=4) {
+  const p = v / max;
+  if (p >= 0.75) return 'good';
+  if (p >= 0.5) return 'warn';
+  return 'bad';
+}
+
+// ── STAT CARDS ────────────────────────────────────────────────────────────────
+function renderStats() {
+  const n = allData.length;
+  const avgRating = avg(allData, 'q24', null);
+  const defYes = pct(allData, 'q25', 'Definitely yes');
+  const probDefYes = allData.filter(r => r.q25 === 'Definitely yes' || r.q25 === 'Probably yes').length;
+  const recPct = n ? Math.round(probDefYes / n * 100) : 0;
+
+  const nurseAvg = ['q1','q2','q3'].map(q => avg(allData, q, FREQ_MAP)).filter(Boolean);
+  const nurseScore = nurseAvg.length ? (nurseAvg.reduce((a,b)=>a+b,0)/nurseAvg.length).toFixed(2) : '—';
+  const drAvg = ['q4','q5','q6'].map(q => avg(allData, q, FREQ_MAP)).filter(Boolean);
+  const drScore = drAvg.length ? (drAvg.reduce((a,b)=>a+b,0)/drAvg.length).toFixed(2) : '—';
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card highlight">
+      <div class="stat-label">Total Responses</div>
+      <div class="stat-value">${n}</div>
+      <div class="stat-sub">Submissions received</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Hospital Rating</div>
+      <div class="stat-value">${avgRating != null ? avgRating.toFixed(1) : '—'}</div>
+      <div class="stat-sub">Out of 10</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Would Recommend</div>
+      <div class="stat-value">${recPct}%</div>
+      <div class="stat-sub">Probably/Definitely yes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Nurse Score</div>
+      <div class="stat-value">${nurseScore}</div>
+      <div class="stat-sub">Avg Q1–Q3 (max 4)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Doctor Score</div>
+      <div class="stat-value">${drScore}</div>
+      <div class="stat-sub">Avg Q4–Q6 (max 4)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Def. Recommend</div>
+      <div class="stat-value">${defYes}%</div>
+      <div class="stat-sub">Definitely yes</div>
+    </div>
+  `;
+}
+
+// ── DOMAIN TABLE ──────────────────────────────────────────────────────────────
+function renderDomainTable() {
+  const domains = [
+    { name: 'Nurse Communication', qs: ['q1','q2','q3'], max: 4, map: FREQ_MAP },
+    { name: 'Doctor Communication', qs: ['q4','q5','q6'], max: 4, map: FREQ_MAP },
+    { name: 'Hospital Environment', qs: ['q7','q8','q9'], max: 4, map: FREQ_MAP },
+    { name: 'Staff Coordination', qs: ['q10','q11'], max: 4, map: FREQ_MAP },
+    { name: 'Responsiveness', qs: ['q14'], max: 4, map: FREQ_MAP },
+    { name: 'Medication Communication', qs: ['q16','q17'], max: 4, map: FREQ_MAP },
+    { name: 'Discharge Planning', qs: ['q19','q22','q23'], max: null, qs_yesno: true },
+    { name: 'Overall Rating', qs: ['q24'], max: 10, map: null },
+  ];
+
+  let rows = '';
+  domains.forEach(d => {
+    let scoreVal;
+    if (d.qs_yesno) {
+      const vals = [];
+      d.qs.forEach(q => { vals.push(pct(allData, q, 'Yes') + pct(allData, q, 'Yes, definitely') + pct(allData, q, 'Yes, somewhat')); });
+      scoreVal = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+      const badge = scoreVal == null ? '' : scoreVal >= 75 ? 'good' : scoreVal >= 50 ? 'warn' : 'bad';
+      const label = scoreVal == null ? '—' : scoreVal.toFixed(1) + '%';
+      rows += `<tr><td>${d.name}</td><td><div class="score-bar-wrap"><div class="score-bar" style="width:${scoreVal||0}px;max-width:200px;width:${Math.min(scoreVal||0,100)*2}px"></div><span class="score-num">${label}</span></div></td><td><span class="badge ${badge}">${scoreVal==null?'No data':badge==='good'?'Good':badge==='warn'?'Fair':'Needs Improvement'}</span></td></tr>`;
+    } else {
+      const avgs = d.qs.map(q => avg(allData, q, d.map)).filter(v=>v!=null);
+      scoreVal = avgs.length ? avgs.reduce((a,b)=>a+b,0)/avgs.length : null;
+      const pctVal = scoreVal != null && d.max ? (scoreVal/d.max)*100 : null;
+      const badge = pctVal == null ? '' : pctVal >= 75 ? 'good' : pctVal >= 50 ? 'warn' : 'bad';
+      const label = scoreVal == null ? '—' : d.max === 10 ? scoreVal.toFixed(1)+'/10' : scoreVal.toFixed(2)+'/4';
+      rows += `<tr><td>${d.name}</td><td><div class="score-bar-wrap"><div class="score-bar" style="width:${Math.min(pctVal||0,100)*2}px;max-width:200px"></div><span class="score-num">${label}</span></div></td><td><span class="badge ${badge}">${pctVal==null?'No data':badge==='good'?'Good':badge==='warn'?'Fair':'Needs Improvement'}</span></td></tr>`;
+    }
+  });
+
+  document.getElementById('domainTableWrap').innerHTML = `
+    <table class="score-table">
+      <thead><tr><th>Domain</th><th style="width:280px">Score</th><th>Rating</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────────────────
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+function renderRatingChart() {
+  destroyChart('ratingChart');
+  const counts = Array(11).fill(0);
+  allData.forEach(r => { const v = parseInt(r.q24); if (!isNaN(v)) counts[v]++; });
+  charts['ratingChart'] = new Chart(document.getElementById('ratingChart'), {
+    type: 'bar',
+    data: {
+      labels: ['0','1','2','3','4','5','6','7','8','9','10'],
+      datasets: [{ data: counts, backgroundColor: counts.map((_,i) => i>=8?COLORS.teal:i>=5?COLORS.accent:'#c0392b'), borderRadius: 6, borderSkipped: false }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+}
+
+function renderRecommendChart() {
+  destroyChart('recommendChart');
+  const opts = ['Definitely no','Probably no','Probably yes','Definitely yes'];
+  const counts = opts.map(o => allData.filter(r => r.q25 === o).length);
+  charts['recommendChart'] = new Chart(document.getElementById('recommendChart'), {
+    type: 'doughnut',
+    data: { labels: opts, datasets: [{ data: counts, backgroundColor: [COLORS.bad,'#e07b6a',COLORS.accent,COLORS.teal], borderWidth: 2, borderColor: '#fff' }] },
+    options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, cutout: '60%' }
+  });
+}
+
+function renderCommChart() {
+  destroyChart('commChart');
+  const labels = ['Courtesy (Nurses)','Listening (Nurses)','Explain (Nurses)','Courtesy (Drs)','Listening (Drs)','Explain (Drs)'];
+  const qs = ['q1','q2','q3','q4','q5','q6'];
+  const vals = qs.map(q => { const a = avg(allData, q, FREQ_MAP); return a != null ? parseFloat(a.toFixed(2)) : 0; });
+  charts['commChart'] = new Chart(document.getElementById('commChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: vals, backgroundColor: qs.map((_,i)=>i<3?COLORS.teal:COLORS.tealMid), borderRadius: 6 }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { min: 0, max: 4, ticks: { stepSize: 1 } } } }
+  });
+}
+
+function renderEnvChart() {
+  destroyChart('envChart');
+  const opts = [['Clean Room','q7'],['Able to Rest','q8'],['Quiet at Night','q9']];
+  const vals = opts.map(([,q]) => { const a = avg(allData, q, FREQ_MAP); return a!=null?parseFloat(a.toFixed(2)):0; });
+  charts['envChart'] = new Chart(document.getElementById('envChart'), {
+    type: 'radar',
+    data: {
+      labels: opts.map(o=>o[0]),
+      datasets: [{ data: vals, backgroundColor: 'rgba(13,122,122,0.15)', borderColor: COLORS.teal, pointBackgroundColor: COLORS.teal, borderWidth: 2 }]
+    },
+    options: { scales: { r: { min: 0, max: 4, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+  });
+}
+
+function renderTimeChart() {
+  destroyChart('timeChart');
+  const dayMap = {};
+  allData.forEach(r => {
+    const d = r.submitted_at ? r.submitted_at.split('T')[0] : null;
+    if (d) dayMap[d] = (dayMap[d] || 0) + 1;
+  });
+  const sorted = Object.entries(dayMap).sort((a,b)=>a[0].localeCompare(b[0]));
+  const labels = sorted.map(e=>e[0]);
+  const vals = sorted.map(e=>e[1]);
+  charts['timeChart'] = new Chart(document.getElementById('timeChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ data: vals, borderColor: COLORS.teal, backgroundColor: 'rgba(13,122,122,0.08)', fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: COLORS.teal }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+}
+
+function renderHealthChart() {
+  destroyChart('healthChart');
+  const opts = ['Excellent','Very good','Good','Fair','Poor'];
+  const counts = opts.map(o => allData.filter(r => r.q27 === o).length);
+  charts['healthChart'] = new Chart(document.getElementById('healthChart'), {
+    type: 'bar',
+    data: { labels: opts, datasets: [{ data: counts, backgroundColor: [COLORS.good,'#2ebd7a',COLORS.accent,'#e07b6a',COLORS.bad], borderRadius: 6 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+}
+
+// ── RESPONSES TABLE ───────────────────────────────────────────────────────────
+function renderResponsesTable(page = 1) {
+  currentPage = page;
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = allData.slice(start, start + PAGE_SIZE);
+  const totalPages = Math.ceil(allData.length / PAGE_SIZE);
+
+  if (!slice.length) {
+    document.getElementById('responsesTableWrap').innerHTML = '<div class="loading">No responses yet.</div>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  const rows = slice.map(r => `
+    <tr>
+      <td>${r.submitted_at ? new Date(r.submitted_at).toLocaleString() : '—'}</td>
+      <td>${r.q24 != null ? r.q24 + '/10' : '—'}</td>
+      <td>${r.q25 || '—'}</td>
+      <td>${r.q1 || '—'}</td>
+      <td>${r.q4 || '—'}</td>
+      <td>${r.q7 || '—'}</td>
+      <td>${r.q27 || '—'}</td>
+    </tr>`).join('');
+
+  document.getElementById('responsesTableWrap').innerHTML = `
+    <table class="responses-table">
+      <thead><tr>
+        <th>Submitted</th><th>Rating</th><th>Recommend</th>
+        <th>Nurse Q1</th><th>Doctor Q4</th><th>Cleanliness Q7</th><th>Health Q27</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  // Pagination
+  let pages = '';
+  if (totalPages > 1) {
+    pages += `<button class="page-btn" onclick="renderResponsesTable(${page-1})" ${page===1?'disabled':''}>‹ Prev</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      if (i <= 2 || i >= totalPages-1 || Math.abs(i-page)<=1) {
+        pages += `<button class="page-btn ${i===page?'active':''}" onclick="renderResponsesTable(${i})">${i}</button>`;
+      } else if (Math.abs(i-page)===2) pages += `<span style="color:var(--muted);padding:0 4px">…</span>`;
+    }
+    pages += `<button class="page-btn" onclick="renderResponsesTable(${page+1})" ${page===totalPages?'disabled':''}>Next ›</button>`;
+  }
+  document.getElementById('pagination').innerHTML = pages;
+}
+
+// ── EXPORT CSV ────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!allData.length) return;
+  const keys = Object.keys(allData[0]);
+  const csv = [keys.join(','), ...allData.map(r => keys.map(k => JSON.stringify(r[k] ?? '')).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `survey_responses_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+loadAll();
+</script>
+</body>
+</html>
