@@ -422,6 +422,11 @@ function renderStats() {
       <div class="stat-value">${defYes}%</div>
       <div class="stat-sub">Definitely yes</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-label">Anonymous</div>
+      <div class="stat-value">${n ? Math.round(allData.filter(r=>r.anonymous).length/n*100) : 0}%</div>
+      <div class="stat-sub">${allData.filter(r=>r.anonymous).length} of ${n} responses</div>
+    </div>
   `;
 }
 
@@ -563,19 +568,21 @@ function renderResponsesTable(page = 1) {
   const rows = slice.map(r => `
     <tr>
       <td>${r.submitted_at ? new Date(r.submitted_at).toLocaleString() : '—'}</td>
+      <td>${r.anonymous ? '<span style="color:var(--muted);font-size:0.75rem">Anonymous</span>' : (r.patient_name || '—')}</td>
+      <td>${r.anonymous ? '—' : (r.uhid || '—')}</td>
+      <td>${r.anonymous ? '—' : (r.patient_age || '—')}</td>
+      <td>${r.anonymous ? '—' : (r.patient_gender || '—')}</td>
       <td>${r.q24 != null ? r.q24 + '/10' : '—'}</td>
       <td>${r.q25 || '—'}</td>
       <td>${r.q1 || '—'}</td>
       <td>${r.q4 || '—'}</td>
-      <td>${r.q7 || '—'}</td>
-      <td>${r.q27 || '—'}</td>
     </tr>`).join('');
 
   document.getElementById('responsesTableWrap').innerHTML = `
     <table class="responses-table">
       <thead><tr>
-        <th>Submitted</th><th>Rating</th><th>Recommend</th>
-        <th>Nurse Q1</th><th>Doctor Q4</th><th>Cleanliness Q7</th><th>Health Q27</th>
+        <th>Submitted</th><th>Name</th><th>UHID</th><th>Age</th><th>Gender</th>
+        <th>Rating</th><th>Recommend</th><th>Nurse Q1</th><th>Doctor Q4</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
